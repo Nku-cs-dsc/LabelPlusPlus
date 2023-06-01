@@ -2,10 +2,9 @@
 """
 #####################################################################
     > File Name: http_visual.py
-    > Author: 
-    > Email: @baidu.com
+    > Author: dongshichao.
+    > Email: dongshichao1996@gmail.com
     > Created Time: 2023/05/25 15:36:12
-    > Copyright (c) 2021 Baidu.com, Inc. All Rights Reserved
 #####################################################################
 """
 import os
@@ -37,6 +36,29 @@ def get_imageset(labelID, bottomScore, topScore):
     return imageSet
 
 
+@app.route("/resetLabel",methods=["POST", "GET"])
+def annotation():
+    global ImageSet, HyperParameters
+    placeholder1 = '请输入LabelID'
+    placeholder2 = '请输入CaseBottomScore'
+    placeholder3 = '请输入CaseTopScore'
+    per_page = 80
+    Page = request.args.get(get_page_parameter(), type=int, default=1)
+    # split total dataset into multi-pages.
+    paginate = Pagination(page=Page, per_page=per_page, total=len(ImageSet), css_framework='bootstrap4')
+
+    start = (Page - 1) * per_page
+    end = start + per_page
+    imageset = ImageSet[start:end]
+
+    if request.method == "POST":
+        annotation_list = request.form.getlist('checkedList[]')
+        if len(annotation_list):
+            print(annotation_list)
+
+    return render_template('index.html', **locals())
+
+
 @app.route("/",methods=["POST", "GET"])
 def index():
     global ImageSet, HyperParameters, Page
@@ -46,24 +68,19 @@ def index():
     
     per_page = 80
     Page = request.args.get(get_page_parameter(), type=int, default=1)
-    print(Page)
 
     if request.method == "GET":
         pass
 
     if request.method == "POST":
-        annotation_list = request.values.getlist('labelBox')
-        if len(annotation_list):
-            print('done')
-        else:
-            visual_info = request.values.to_dict()
-            for k in HyperParameters.keys():
-                ret = visual_info.get(k)
-                if ret != "":
-                    Page = 1
-                    HyperParameters[k] = ret
+        visual_info = request.values.to_dict()
+        for k in HyperParameters.keys():
+            ret = visual_info.get(k)
+            if ret != "":
+                Page = 1
+                HyperParameters[k] = ret
             
-            ImageSet = get_imageset(**HyperParameters)
+        ImageSet = get_imageset(**HyperParameters)
         
     # split total dataset into multi-pages.
     paginate = Pagination(page=Page, per_page=per_page, total=len(ImageSet), css_framework='bootstrap4')
